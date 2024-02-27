@@ -17,8 +17,10 @@ struct Pos{
 }
 fn main() {
     let args: Vec<String> = env::args().collect();
+    assert!(args.len()==2, "You must provide a file argument");
     let file_path = &args[1];
-    process_instructions(file_path);   
+    let history: HashMap<Pos, i32> = process_instructions(file_path);   
+    println!("{}", history.len());
 }
 // The output is wrapped in a Result to allow matching on errors
 // Returns an Iterator to the Reader of the lines of the file.
@@ -89,7 +91,7 @@ fn follow_head(head: &mut Pos,   tail: &mut Pos) {
     // Else tail needs to move closer to head. 
     // If head and tail in same row or column then tail moves in that row/col
     // otherwise tail moves diagonally to be in same row/col as head
-    if (head.x -tail.x).abs() <= 1 && (head.y - tail.y).abs() <= 1 {return};
+    if (head.x - tail.x).abs() <= 1 && (head.y - tail.y).abs() <= 1 {return};
 
     // head and tail same column
     if head.x==tail.x {
@@ -113,7 +115,18 @@ fn follow_head(head: &mut Pos,   tail: &mut Pos) {
         return;
     }
 
-    // TODO: tail moves diagonally to be in same row or column as Head
+    // head and tail in diff row and column, move diagnoally
+    if tail.x > head.x {
+        tail.x = tail.x - 1;
+    } else {
+        tail.x = tail.x + 1;
+    }    
+    if tail.y > head.y {
+        tail.y = tail.y - 1;
+    } else{
+        tail.y = tail.y + 1;
+    }
+
 }
 
 #[cfg(test)]
@@ -122,6 +135,8 @@ mod tests {
     #[test]
     fn t1() {
         let file_path = "./src/test.txt".to_string();
-        process_instructions(&file_path);
+        let history: HashMap<Pos, i32> = process_instructions(&file_path);
+        assert_eq!(history.len(), 13);
+
     }
 }
