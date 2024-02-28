@@ -10,7 +10,7 @@ enum Instruction {
     Left(u32),
     Right(u32),
 }
-#[derive(Hash, Eq, PartialEq, Debug, Copy, Clone)]
+#[derive(Hash, Eq, PartialEq, Debug, Copy, Clone, Default)]
 struct Pos{
     pub x: i32,
     pub y: i32,
@@ -53,21 +53,22 @@ fn parse_line(line: &str) -> Instruction {
 }
 fn process_instructions(file_path: &String) -> HashMap<Pos, i32>{
     let mut tail_history: HashMap<Pos, i32> = HashMap::new();
-    let mut head = Pos{x: 0, y: 0};
-    let mut tail = Pos{x: 0, y: 0};
-    tail_history.insert(tail, 0);
+    
+    let mut rope = [Pos::default(); 10];
+    tail_history.insert(rope[9].clone(), 0);
     if let Ok(lines) = read_lines(file_path) {
         for line in lines {
             if let Ok(l) = line {
                 println! ("{:?}", l);
                 let i: Instruction = parse_line(&l);
-                follow_heads(i, &mut head, &mut tail, &mut tail_history) ;
+                follow_heads(i, &mut rope, &mut tail_history) ;
             }
         }
     }
     return tail_history;
 }
-fn follow_heads(i: Instruction, head: &mut Pos, tail: &mut Pos, history: &mut HashMap<Pos, i32> )  {
+
+fn follow_heads(i: Instruction, rope: &mut [Pos], tail_history: &mut HashMap<Pos, i32> )  {
     let distance = match i {
         Instruction::Up (dist)=> dist,
         Instruction::Down (dist)=> dist,
@@ -76,55 +77,57 @@ fn follow_heads(i: Instruction, head: &mut Pos, tail: &mut Pos, history: &mut Ha
     }; 
     for _ in 0..distance {
         match i {
-            Instruction::Up     (_) => head.y = head.y+1,
-            Instruction::Down   (_) => head.y = head.y-1,
-            Instruction::Left   (_) => head.x = head.x-1,
-            Instruction::Right  (_) => head.x = head.x+1, 
+            Instruction::Up     (_) => rope[0].y = rope[0].y+1,
+            Instruction::Down   (_) => rope[0].y = rope[0].y-1,
+            Instruction::Left   (_) => rope[0].x = rope[0].x-1,
+            Instruction::Right  (_) => rope[0].x = rope[0].x+1, 
         };
-        follow_head(head, tail);
-        history.insert(tail.clone(), 0);
+        for i in 0..rope.len()-1 {
+            follow_head(rope[i].clone(), &mut rope[i+1]);
+        }
+        tail_history.insert(rope[9].clone(), 0);
     }
 }
-fn follow_head(head: &mut Pos,   tail: &mut Pos) {
+fn follow_head(leader: Pos,   follower: &mut Pos) {
 
     // If head is now 1 or zero distance from tail, do nothing
     // Else tail needs to move closer to head. 
     // If head and tail in same row or column then tail moves in that row/col
     // otherwise tail moves diagonally to be in same row/col as head
-    if (head.x - tail.x).abs() <= 1 && (head.y - tail.y).abs() <= 1 {return};
+    if (leader.x - follower.x).abs() <= 1 && (leader.y - follower.y).abs() <= 1 {return};
 
-    // head and tail same column
-    if head.x==tail.x {
-        if head.y > tail.y { 
-            tail.y = tail.y+1;
+    // leader and follower same column
+    if leader.x==follower.x {
+        if leader.y > follower.y { 
+            follower.y = follower.y+1;
         }
         else {
-            tail.y = tail.y-1;
+            follower.y = follower.y-1;
         }
         return;
     }
 
-    // head and tail same row
-    if head.y==tail.y {
-        if head.x > tail.x { 
-            tail.x = tail.x+1;
+    // leader and follower same row
+    if leader.y==follower.y {
+        if leader.x > follower.x { 
+            follower.x = follower.x+1;
         }
         else {
-            tail.x = tail.x-1;
+            follower.x = follower.x-1;
         }
         return;
     }
 
-    // head and tail in diff row and column, move diagnoally
-    if tail.x > head.x {
-        tail.x = tail.x - 1;
+    // leader and follower in diff row and column, move diagnoally
+    if follower.x > leader.x {
+        follower.x = follower.x - 1;
     } else {
-        tail.x = tail.x + 1;
+        follower.x = follower.x + 1;
     }    
-    if tail.y > head.y {
-        tail.y = tail.y - 1;
+    if follower.y > leader.y {
+        follower.y = follower.y - 1;
     } else{
-        tail.y = tail.y + 1;
+        follower.y = follower.y + 1;
     }
 
 }
@@ -134,9 +137,9 @@ mod tests {
     use super::*;
     #[test]
     fn t1() {
-        let file_path = "./src/test.txt".to_string();
+        let file_path = "./src/test2.txt".to_string();
         let history: HashMap<Pos, i32> = process_instructions(&file_path);
-        assert_eq!(history.len(), 13);
+        assert_eq!(history.len(), 36);
 
     }
 }
