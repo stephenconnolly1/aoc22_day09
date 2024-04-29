@@ -83,51 +83,53 @@ fn follow_heads(i: Instruction, rope: &mut [Pos], tail_history: &mut HashMap<Pos
             Instruction::Right  (_) => rope[0].x = rope[0].x+1, 
         };
         for i in 0..rope.len()-1 {
-            follow_head(rope[i].clone(), &mut rope[i+1]);
+            follow_head(&mut rope[i..=i+1]);
         }
         tail_history.insert(rope[9].clone(), 0);
     }
 }
-fn follow_head(leader: Pos,   follower: &mut Pos) {
-
+fn follow_head(rope_head: &mut[Pos]) { 
+    
     // If head is now 1 or zero distance from tail, do nothing
     // Else tail needs to move closer to head. 
     // If head and tail in same row or column then tail moves in that row/col
     // otherwise tail moves diagonally to be in same row/col as head
-    if (leader.x - follower.x).abs() <= 1 && (leader.y - follower.y).abs() <= 1 {return};
+    if (rope_head[0].x - rope_head[1].x).abs() <= 1 && (rope_head[0].y - rope_head[1].y).abs() <= 1 {
+        return
+    };
 
     // leader and follower same column
-    if leader.x==follower.x {
-        if leader.y > follower.y { 
-            follower.y = follower.y+1;
+    if rope_head[0].x == rope_head[1].x {
+        if rope_head[0].y > rope_head[1].y { 
+            rope_head[1].y = rope_head[1].y+1;
         }
         else {
-            follower.y = follower.y-1;
+            rope_head[1].y = rope_head[1].y-1;
         }
         return;
     }
 
     // leader and follower same row
-    if leader.y==follower.y {
-        if leader.x > follower.x { 
-            follower.x = follower.x+1;
+    if rope_head[0].y == rope_head[1].y {
+        if rope_head[0].x > rope_head[1].x { 
+            rope_head[1].x = rope_head[1].x+1;
         }
         else {
-            follower.x = follower.x-1;
+            rope_head[1].x = rope_head[1].x-1;
         }
         return;
     }
 
     // leader and follower in diff row and column, move diagnoally
-    if follower.x > leader.x {
-        follower.x = follower.x - 1;
+    if rope_head[1].x > rope_head[0].x {
+        rope_head[1].x = rope_head[1].x - 1;
     } else {
-        follower.x = follower.x + 1;
+        rope_head[1].x = rope_head[1].x + 1;
     }    
-    if follower.y > leader.y {
-        follower.y = follower.y - 1;
+    if rope_head[1].y > rope_head[0].y {
+        rope_head[1].y = rope_head[1].y - 1;
     } else{
-        follower.y = follower.y + 1;
+        rope_head[1].y = rope_head[1].y + 1;
     }
 
 }
@@ -140,6 +142,5 @@ mod tests {
         let file_path = "./src/test2.txt".to_string();
         let history: HashMap<Pos, i32> = process_instructions(&file_path);
         assert_eq!(history.len(), 36);
-
     }
 }
